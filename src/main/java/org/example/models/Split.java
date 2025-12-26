@@ -16,4 +16,12 @@ public class Split {
     public double getAmount() {
         return amount;
     }
+
+    @Override
+    public String toString() {
+        return "Split{" +
+                "userId='" + userId + '\'' +
+                ", amount=" + amount +
+                '}';
+    }
 }

@@ -1,4 +1,4 @@
-package org.example.service;
+package org.example.models;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,5 +12,13 @@ public class ExpenseMap {
 
     public Map<String, Double> getExpenseMap() {
         return expenseMap;
+    }
+
+    public void put(String key, Double value) {
+        expenseMap.put(key,value);
+    }
+
+    public boolean isEmpty() {
+        return expenseMap.isEmpty();
     }
 }

@@ -20,6 +20,22 @@ public class SplitwiseService {
         groupBalance = new HashMap<>();
     }
 
+    public Map<String, User> getUsers() {
+        return users;
+    }
+
+    public Map<String, Group> getGroupList() {
+        return groupList;
+    }
+
+    public Map<String, List<Expense>> getGroupExpenseList() {
+        return groupExpenseList;
+    }
+
+    public Map<String, ExpenseMap> getGroupBalance() {
+        return groupBalance;
+    }
+
     public static SplitwiseService getInstance() {
         if (splitWiseService == null) {
             splitWiseService = new SplitwiseService();
@@ -27,30 +43,38 @@ public class SplitwiseService {
         return splitWiseService;
     }
 
-    public void createUser(String userId, String name, String email) {
+    public void createUser(String userId, String name) {
         //todo -check if user already exists dont create
-        users.put(userId, new User(userId, name, email));
+        if (users.containsKey(userId)) {
+            throw new IllegalStateException("the user already exists!");
+        }
+        users.put(userId, new User(userId, name));
     }
 
     public void createGroup(String id, String name, List<String> userIds) {
         List<User> userList = new ArrayList<>();
         for (String usersId : userIds) {
-            if (users.containsKey(usersId)) {
-                userList.add(users.get(usersId));
+            if (!users.containsKey(usersId)) {
+                //todo - ask for the full details - like name.
+                createUser(usersId, "Random-name");
             }
+            userList.add(users.get(usersId));
         }
         groupList.put(id, new Group(id, name, userList, new Date()));
     }
 
-    public void addExpense(String name, String id, double amount, String paidByUserId, String groupId, SplitType splitType, Map<String, Double> splitData) throws IllegalStateException {
+    public Boolean addExpense(String name, String id, double amount, String paidByUserId, String groupId, SplitType splitType, ExpenseMap splitData) throws IllegalStateException {
         //split data logic calculation - and store the final split it each expense which is a map
-        List<String> userList = new ArrayList<>(splitData.keySet());
+        List<String> userList = new ArrayList<>(splitData.getExpenseMap().keySet());
+        if(!groupList.containsKey(groupId)){
+            createGroup(groupId,"Trip",userList);
+        }
         List<Split> finalSplit = SplitCalculator.calculateUserSplit(userList, amount, paidByUserId, splitData, splitType);
         SplitCalculator.validateSplit(finalSplit);
         Expense expense = new Expense(id, name, amount, paidByUserId, groupId, finalSplit);
         groupExpenseList.computeIfAbsent(groupId, k -> new ArrayList<>()).add(expense);
-
         updateGroupExpense(groupId, expense);
+        return true;
     }
 
     private void updateGroupExpense(String groupId, Expense expense) {
@@ -63,5 +87,4 @@ public class SplitwiseService {
         }
         groupBalance.put(groupId, expenseMap);
     }
-
 }

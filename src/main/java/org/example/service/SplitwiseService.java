@@ -16,10 +16,11 @@ public class SplitwiseService {
     private SplitwiseService() {
         users = new HashMap<>();
         groupList = new HashMap<>();
+        groupExpenseList = new HashMap<>();
         groupBalance = new HashMap<>();
     }
 
-    public SplitwiseService getInstance() {
+    public static SplitwiseService getInstance() {
         if (splitWiseService == null) {
             splitWiseService = new SplitwiseService();
         }

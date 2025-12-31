@@ -1,16 +1,17 @@
 import org.example.models.BalanceSheet;
 import org.example.models.ExpenseMap;
 import org.example.models.SplitType;
-import org.example.service.SplitwiseService;
+import org.example.service.SplitWiseService;
 import org.junit.Assert;
 import org.junit.Test;
 import java.util.Map;
 
 public class ExpenseTest {
 
-    private SplitwiseService splitwiseService;
     private BalanceSheet balanceSheet;
+
     private ExpenseMap getExpenseMapForExact(){
+
         ExpenseMap expenseMap = new ExpenseMap();
         expenseMap.put("A",90D);
         expenseMap.put("B",20D);
@@ -34,23 +35,21 @@ public class ExpenseTest {
     }
 
     public ExpenseTest(){
-        splitwiseService = SplitwiseService.getInstance();
+        SplitWiseService.SPLITWISESERVICE.addExpense("trip","exp1",1000,"A","123", SplitType.EQUAL,getExpenseMapForEqual());
+        SplitWiseService.SPLITWISESERVICE.addExpense("food","exp2",120.0,"B","123", SplitType.EXACT,getExpenseMapForExact());
+        SplitWiseService.SPLITWISESERVICE.addExpense("travel","exp3",1000.0,"C","123", SplitType.PERCENTAGE,getExpenseMapForPercentage());
         balanceSheet = new BalanceSheet();
-        splitwiseService.addExpense("trip","exp1",1000,"A","123", SplitType.EQUAL,getExpenseMapForEqual());
-        splitwiseService.addExpense("food","exp2",120.0,"B","123", SplitType.EXACT,getExpenseMapForExact());
-        splitwiseService.addExpense("travel","exp3",1000.0,"C","123", SplitType.PERCENTAGE,getExpenseMapForPercentage());
     }
     @Test
     public void createUser(){
-        splitwiseService = SplitwiseService.getInstance();
-        splitwiseService.createUser("D","random");
-        splitwiseService.createUser("E","random");
-        Assert.assertEquals(5, splitwiseService.getUsers().size());
+        SplitWiseService.SPLITWISESERVICE.createUser("D","random");
+        SplitWiseService.SPLITWISESERVICE.createUser("E","random");
+        Assert.assertEquals(5, SplitWiseService.SPLITWISESERVICE.getUsers().size());
     }
 
     @Test
     public void balanceTest(){
-        Map<String,ExpenseMap> resGroupBalance = splitwiseService.getGroupBalance();
+        Map<String,ExpenseMap> resGroupBalance = SplitWiseService.SPLITWISESERVICE.getGroupBalance();
         Assert.assertEquals(276.666666667, resGroupBalance.get("123").getExpenseMap().get("A"),1e-6);
         Assert.assertEquals(-533.33333333, resGroupBalance.get("123").getExpenseMap().get("B"),1e-6);
         Assert.assertEquals(256.666666666, resGroupBalance.get("123").getExpenseMap().get("C"),1e-6);
@@ -60,5 +59,12 @@ public class ExpenseTest {
     public void printInvoiceTest(){
         balanceSheet.printInvoice("123");
     }
+
+    @Test
+    public void settleBalance(){
+        balanceSheet.settleBalance("B","C",100.0,"123");
+        printInvoiceTest();
+    }
+
 
 }

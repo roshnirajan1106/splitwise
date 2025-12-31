@@ -4,23 +4,27 @@ import org.example.models.*;
 
 import java.util.*;
 
-public class SplitwiseService {
-    private static SplitwiseService splitWiseService;
+public enum SplitWiseService {
+    SPLITWISESERVICE ; // static final field ;
     Map<String, User> users;
     Map<String, Group> groupList;
     //list of expenses for a group-id.
     Map<String, List<Expense>> groupExpenseList;
     //for each group id what is the final balance of each user
     Map<String, ExpenseMap> groupBalance;
+    int count = 0;
 
-    private SplitwiseService() {
+
+    SplitWiseService() {
         users = new HashMap<>();
         groupList = new HashMap<>();
         groupExpenseList = new HashMap<>();
         groupBalance = new HashMap<>();
+        count++;
     }
 
     public Map<String, User> getUsers() {
+        count++;
         return users;
     }
 
@@ -34,13 +38,6 @@ public class SplitwiseService {
 
     public Map<String, ExpenseMap> getGroupBalance() {
         return groupBalance;
-    }
-
-    public static SplitwiseService getInstance() {
-        if (splitWiseService == null) {
-            splitWiseService = new SplitwiseService();
-        }
-        return splitWiseService;
     }
 
     public void createUser(String userId, String name) {

@@ -3,11 +3,9 @@ package org.example.service;
 import org.example.models.ExpenseMap;
 import org.example.models.Split;
 import org.example.models.SplitType;
-import org.example.models.User;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 //todo - take care of the currency
 public class SplitCalculator {
@@ -73,7 +71,7 @@ public class SplitCalculator {
         double epsilon = 1e-6;
         double res = finalSplit.stream().mapToDouble(Split::getAmount).sum();
         boolean isValid = Math.abs(res) < epsilon;
-        if(!isValid) throw new IllegalStateException("The splits dont match!");
+        if (!isValid) throw new IllegalStateException("The splits dont match!");
     }
 }
 

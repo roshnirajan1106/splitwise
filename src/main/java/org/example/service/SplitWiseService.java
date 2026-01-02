@@ -1,87 +1,86 @@
 package org.example.service;
 
 import org.example.models.*;
+import org.example.models.Balance.BalanceSheet;
+import org.example.models.Balance.BalanceSimplifier;
+import org.example.models.Repository.Repository;
 
 import java.util.*;
 
-public enum SplitWiseService {
-    SPLITWISESERVICE ; // static final field ;
-    Map<String, User> users;
-    Map<String, Group> groupList;
-    //list of expenses for a group-id.
-    Map<String, List<Expense>> groupExpenseList;
-    //for each group id what is the final balance of each user
-    Map<String, ExpenseMap> groupBalance;
-    int count = 0;
+// convert to repository + service - but what to make singleton etc.
+public class SplitWiseService {
+    private volatile static SplitWiseService splitWiseService = null;
+    private BalanceSimplifier balanceSimplifier;
+    private Repository repository;
 
+    private SplitWiseService() {
+        repository = new Repository();
+        balanceSimplifier = new BalanceSimplifier(repository);
+    }
 
-    SplitWiseService() {
-        users = new HashMap<>();
-        groupList = new HashMap<>();
-        groupExpenseList = new HashMap<>();
-        groupBalance = new HashMap<>();
-        count++;
+    public static SplitWiseService getInstance() {
+        if (splitWiseService == null) {
+            synchronized (SplitWiseService.class) {
+                if (splitWiseService == null) {
+                    splitWiseService = new SplitWiseService();
+                }
+            }
+        }
+        return splitWiseService;
     }
 
     public Map<String, User> getUsers() {
-        count++;
-        return users;
-    }
-
-    public Map<String, Group> getGroupList() {
-        return groupList;
-    }
-
-    public Map<String, List<Expense>> getGroupExpenseList() {
-        return groupExpenseList;
-    }
-
-    public Map<String, ExpenseMap> getGroupBalance() {
-        return groupBalance;
+        return repository.getUsers();
     }
 
     public void createUser(String userId, String name) {
         //todo -check if user already exists dont create
-        if (users.containsKey(userId)) {
-            throw new IllegalStateException("the user already exists!");
-        }
-        users.put(userId, new User(userId, name));
+        repository.addUser(userId, name);
     }
 
     public void createGroup(String id, String name, List<String> userIds) {
-        List<User> userList = new ArrayList<>();
-        for (String usersId : userIds) {
-            if (!users.containsKey(usersId)) {
-                //todo - ask for the full details - like name.
-                createUser(usersId, "Random-name");
-            }
-            userList.add(users.get(usersId));
-        }
-        groupList.put(id, new Group(id, name, userList, new Date()));
+        repository.addGroup(id, name, userIds);
     }
 
     public Boolean addExpense(String name, String id, double amount, String paidByUserId, String groupId, SplitType splitType, ExpenseMap splitData) throws IllegalStateException {
         //split data logic calculation - and store the final split it each expense which is a map
         List<String> userList = new ArrayList<>(splitData.getExpenseMap().keySet());
-        if(!groupList.containsKey(groupId)){
-            createGroup(groupId,"Trip",userList);
+        if (!repository.isGroupPresent(groupId)) {
+            createGroup(id, name, userList);
         }
+
         List<Split> finalSplit = SplitCalculator.calculateUserSplit(userList, amount, paidByUserId, splitData, splitType);
         SplitCalculator.validateSplit(finalSplit);
         Expense expense = new Expense(id, name, amount, paidByUserId, groupId, finalSplit);
-        groupExpenseList.computeIfAbsent(groupId, k -> new ArrayList<>()).add(expense);
+        repository.addExpenseToGroup(groupId, expense);
         updateGroupExpense(groupId, expense);
         return true;
     }
 
     private void updateGroupExpense(String groupId, Expense expense) {
-        groupBalance.computeIfAbsent(groupId, k -> new ExpenseMap());
-        ExpenseMap expenseMap = groupBalance.get(groupId);
-        for (Split split : expense.getSplits()) {
-            String userId = split.getUserId();
-            double amount = split.getAmount();
-            expenseMap.getExpenseMap().put(userId, expenseMap.getExpenseMap().getOrDefault(userId, 0.0) + amount);
+        repository.updateFinalBalanceOfGroup(groupId, expense);
+        balanceSimplifier.simplifyTheExpense(groupId);
+    }
+
+    public void settleBalance(String payer, String  receiver, Double amount, String groupId){
+        ExpenseMap splitData = new ExpenseMap();
+        splitData.addExpense(payer,-amount);
+        splitData.addExpense(receiver,amount);
+        splitWiseService.addExpense("settling","settle-balance",0.0,payer,groupId, SplitType.EXACT,splitData);
+        System.out.println("Balance is settled successfully!");
+        //todo - error handling what if there no settlement amount between two.
+        balanceSimplifier.simplifyTheExpense(groupId);
+    }
+    public void printInvoice(String groupId){
+        BalanceSheet balanceSheet = repository.getBalanceSheet(groupId);
+        for(var balance : balanceSheet){
+            for(var expenseMap : balance.getValue()){
+                System.out.println(balance.getKey() + " needs to give " + expenseMap.getKey() + " amt " + expenseMap.getValue());
+            }
         }
-        groupBalance.put(groupId, expenseMap);
+    }
+
+    public BalanceSheet getBalanceSheet(String groupId) {
+        return repository.getBalanceSheet(groupId);
     }
 }

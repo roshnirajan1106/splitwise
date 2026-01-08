@@ -4,6 +4,7 @@ import org.example.models.ExpenseMap;
 import org.example.models.Repository.Repository;
 
 import java.util.Comparator;
+import java.util.Currency;
 import java.util.Map;
 import java.util.PriorityQueue;
 
@@ -16,13 +17,13 @@ public class BalanceSimplifier {
         this.repository = repository;
     }
 
-    public void simplifyTheExpense(String groupId) {
+    public synchronized void simplifyTheExpense(String groupId) {
         repository.clearBalanceSheet(groupId);
         ExpenseMap groupExpenseMap = repository.getGroupBalance(groupId);
         Comparator<Map.Entry<String, Double>> comparator = Comparator.comparingDouble(Map.Entry::getValue);
         PriorityQueue<Map.Entry<String, Double>> minHeap = new PriorityQueue<>(comparator);
         PriorityQueue<Map.Entry<String, Double>> maxHeap = new PriorityQueue<>(comparator.reversed());
-
+        //System.out.println(groupExpenseMap.toString());
         groupExpenseMap.getExpenseMap().entrySet().forEach(e -> {
             if (e.getValue() >= 0) {
                 maxHeap.add(e);
@@ -42,7 +43,7 @@ public class BalanceSimplifier {
                 maxHeap.add(Map.entry(maxPostive.getKey(), amtPostiveRem));
             }
             repository.addSettlement(groupId, maxNegative.getKey(), maxPostive.getKey(), settlementAmt);
-
+           // System.out.println(Thread.currentThread().getName());
         }
 
     }

@@ -45,9 +45,8 @@ public class SplitWiseService {
     public Boolean addExpense(String name, String id, double amount, String paidByUserId, String groupId, SplitType splitType, ExpenseMap splitData) throws IllegalStateException {
         //split data logic calculation - and store the final split it each expense which is a map
         List<String> userList = new ArrayList<>(splitData.getExpenseMap().keySet());
-        if (!repository.isGroupPresent(groupId)) {
-            createGroup(id, name, userList);
-        }
+        //create group if not present.
+        createGroup(id, name, userList);
 
         List<Split> finalSplit = SplitCalculator.calculateUserSplit(userList, amount, paidByUserId, splitData, splitType);
         SplitCalculator.validateSplit(finalSplit);
@@ -60,27 +59,30 @@ public class SplitWiseService {
     private void updateGroupExpense(String groupId, Expense expense) {
         repository.updateFinalBalanceOfGroup(groupId, expense);
         balanceSimplifier.simplifyTheExpense(groupId);
+//        System.out.println(repository.getBalanceSheet(groupId).toString());
     }
 
-    public void settleBalance(String payer, String  receiver, Double amount, String groupId){
+    public void settleBalance(String payer, String receiver, Double amount, String groupId) {
         ExpenseMap splitData = new ExpenseMap();
-        splitData.addExpense(payer,-amount);
-        splitData.addExpense(receiver,amount);
-        splitWiseService.addExpense("settling","settle-balance",0.0,payer,groupId, SplitType.EXACT,splitData);
+        splitData.addExpense(payer, -amount);
+        splitData.addExpense(receiver, amount);
+        splitWiseService.addExpense("settling", "settle-balance", 0.0, payer, groupId, SplitType.EXACT, splitData);
         System.out.println("Balance is settled successfully!");
         //todo - error handling what if there no settlement amount between two.
         balanceSimplifier.simplifyTheExpense(groupId);
     }
-    public void printInvoice(String groupId){
+
+    public void printInvoice(String groupId) {
         BalanceSheet balanceSheet = repository.getBalanceSheet(groupId);
-        for(var balance : balanceSheet){
-            for(var expenseMap : balance.getValue()){
-                System.out.println(balance.getKey() + " needs to give " + expenseMap.getKey() + " amt " + expenseMap.getValue());
+        if(balanceSheet == null){
+            System.out.println("No balance sheet available!");
+            return;
+        }
+        for (var balance : balanceSheet) {
+            for (var expenseMap : balance.getValue()) {
+                System.out.println(balance.getKey() + " needs to give " + expenseMap.getKey() + " amt " + Math.ceil(expenseMap.getValue()));
             }
         }
     }
 
-    public BalanceSheet getBalanceSheet(String groupId) {
-        return repository.getBalanceSheet(groupId);
-    }
 }

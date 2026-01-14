@@ -1,13 +1,17 @@
 package org.example.models;
 
+import lombok.Getter;
+
+import java.util.Iterator;
 import java.util.List;
 
-public class Expense {
+public class Expense  implements Iterable<Split>{
     private String id;
     private String name;
     private Double amount;
     private String paidByUserId;
     private String groupId;
+    @Getter
     private List<Split> splits;
 
 
@@ -20,7 +24,8 @@ public class Expense {
         this.splits = splits;
     }
 
-    public List<Split> getSplits() {
-        return splits;
+    @Override
+    public Iterator<Split> iterator() {
+        return splits.iterator();
     }
 }

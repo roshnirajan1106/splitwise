@@ -1,8 +1,10 @@
 package org.example.models.Repository;
 
-import lombok.extern.slf4j.Slf4j;
 import org.example.models.Balance.BalanceSheet;
-import org.example.models.*;
+import org.example.models.Expense;
+import org.example.models.ExpenseMap;
+import org.example.models.Group;
+import org.example.models.User;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,7 +18,6 @@ public class Repository {
     Map<String, ExpenseMap> groupFinalBalance;
     //for each group id, - simplified balance
     Map<String, BalanceSheet> balanceSheetMap;
-    private volatile ExpenseMap expenseMap;
 
     public Repository() {
         users = new ConcurrentHashMap<>();
@@ -62,15 +63,14 @@ public class Repository {
     }
 
     public void updateFinalBalanceOfGroup(String groupId, Expense expense) {
-        groupFinalBalance.computeIfAbsent(groupId, k -> new ExpenseMap());
-        expenseMap = groupFinalBalance.get(groupId);
-        for (Split split : expense.getSplits()) {
-            String userId = split.getUserId();
-            double amount = split.getAmount();
-            expenseMap.addExpenseForGroup(userId, amount);
-          //  System.out.println("inside update " + Thread.currentThread().getName() + " expenseMap " + expenseMap);
-        }
-        groupFinalBalance.put(groupId, expenseMap);
+        ExpenseMap expenseMap = groupFinalBalance.computeIfAbsent(groupId, k -> new ExpenseMap());
+        expense.getSplits().forEach(
+                split -> {
+                    String userId = split.getUserId();
+                    double amount = split.getAmount();
+                    expenseMap.addExpense(userId, amount);
+                }
+        );
     }
 
     public ExpenseMap getGroupBalance(String groupId) {
@@ -84,8 +84,8 @@ public class Repository {
         return balanceSheetMap.get(groupId);
     }
 
-    public void addSettlement(String groupId, String payer, String reciever, Double settlementAmt) {
-        balanceSheetMap.get(groupId).addSettlement(payer, reciever, settlementAmt);
+    public void updateBalanceSheet(String groupId,BalanceSheet balanceSheet) {
+        balanceSheetMap.put(groupId,balanceSheet);
     }
 
     public void clearBalanceSheet(String groupId) {

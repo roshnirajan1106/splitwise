@@ -39,9 +39,9 @@ public class ExpenseTest {
 
     private ExpenseMap getExpenseMapForEqual() {
         ExpenseMap expenseMap = new ExpenseMap();
-        expenseMap.addExpense("A", null);
-        expenseMap.addExpense("B", null);
-        expenseMap.addExpense("C", null);
+        expenseMap.addExpense("A", 0.0);
+        expenseMap.addExpense("B", 0.0);
+        expenseMap.addExpense("C", 0.0);
         return expenseMap;
     }
 

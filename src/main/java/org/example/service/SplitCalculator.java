@@ -44,6 +44,7 @@ public class SplitCalculator {
                 resSplit.add(new Split(split.getKey(), -percentAmt));
             }
         }
+        System.out.println("the split is " + resSplit);
         return resSplit;
     }
 
@@ -51,11 +52,13 @@ public class SplitCalculator {
         switch (splitType) {
             case EXACT:
                 if (splitData == null || splitData.isEmpty()) {
+                    System.out.println("data per user required");
                     throw new IllegalArgumentException("amount data per user is required");
                 }
                 return splitExact(splitData, amount, paidByUserId);
             case PERCENTAGE:
                 if (splitData == null || splitData.isEmpty()) {
+                    System.out.println("percentage data is required");
                     throw new IllegalArgumentException("percentage data is required!");
                 }
                 return splitByPercentage(splitData, amount, paidByUserId);

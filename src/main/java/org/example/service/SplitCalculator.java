@@ -44,6 +44,7 @@ public class SplitCalculator {
                 resSplit.add(new Split(split.getKey(), -percentAmt));
             }
         }
+        System.out.println("the split is " + resSplit);
         return resSplit;
     }
 
